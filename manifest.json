@@ -1,0 +1,21 @@
+{
+    "name": "AdBlogBlock",
+    "version": "0.1",
+    "manifest_version": 2,
+    "description": "크롬 기초 확장 프로그램",
+    "homepage_url": "To be written",
+    "background": {
+        "scripts": [
+            "background.js"
+        ],
+        "persistent": ??
+    },
+    "browser_action": {
+        "default_title": "Inject!"
+    },
+    "permissions": [
+        "https://*/*",
+        "http://*/*",
+        "tabs"
+    ]
+}
