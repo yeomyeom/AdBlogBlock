@@ -1,5 +1,3 @@
-#web parsing with beautifulsoup
-#from bs4 import BeautifulSoup
 #_*_coding: utf-8 _*_
 from urllib.request import urlopen
 from urllib.error import HTTPError
@@ -26,8 +24,24 @@ def get_targeturl(url):      # Function of loading URL.
         target_url = 'http://'+host_url_http[0]
     return target_url
 
+def firstinnerparse(url):    # Fisrt Parsing + check inner html url to find REAL URl (in #document) 
+    print('first & inner parse')
+    link=''
+    inner_html = []     #inner_html url list
+    firsthtml = web_parse(url)   
+    links = re.findall('<iframe (.*?)>', firsthtml) # Getting innerhtml link
+    for linkElement in links:
+        inner_html += re.findall('src="/PostView(.*?)"', linkElement)
+    print(inner_html)   #inner_html is list of string
+    if len(inner_html)>0:
+        link = '/PostView' + inner_html[0]   #no need to parse hidden html(contain blog music)
+        return link, False
+    else:
+        return url, True
+    
 def firstparse(url):    # Fisrt Parsing to find REAL URl (in #document) 
     print('firstparse')
+    link=''
     inner_html = []     #inner_html url list
     firsthtml = web_parse(url)   
     links = re.findall('<iframe (.*?)>', firsthtml) # Getting innerhtml link
@@ -41,26 +55,14 @@ def secoundparse(url):  # Second Parsing of REAL URL
     print('secoundparse')
     pics, stickers, texts, text = [],[],[],[]  # arrays of pic, sticker, text.
     secondhtml = web_parse(url)  
-    #pics += re.findall('<img src="(.*?)".*?data-width="(.*?)" data-height="(.*?)".*?class="se-image-resource" />'
-                        #, secondhtml) #parse pics number
-    pics += re.findall('<img.*?src="(.*?)".*?data-width="(.*?)" data-height="(.*?)".*?>'
-                        , secondhtml) #parse pics number
+    pics += re.findall('<img.*?src="(.*?)".*?data-width="(.*?)" data-height="(.*?)".*?>', secondhtml) #parse pics number
+    print('1')
     stickers += re.findall('<img.*? src="(.*?)".*?class="se-sticker-image" />',secondhtml)  #parse sticker number
-    text += re.findall('<span.*?>(.*?)</span>',secondhtml) #parse text
+    print('2')
+    texts += re.findall('<span.*?>(.*?)</span>',secondhtml) #parse text
+    print('3')
     for parse in text:
         texts += re.findall("[가-힝 ]",parse)
-         #####################################################################################
-     #### For TESTING! ###################################################################   
-    #print(pics)
-    #print(sticker)
-    #print('Text num'+len(texts))   #text num is meanless
-    '''print('TEXT')
-    for text in texts:
-       print(text)
-    print('Pictures num')
-    print(len(pics))
-    print('Stickers num')
-    print(len(stickers))'''#for debug
     f = open(write_file,'a',-1,'utf-8')
     f.write('====================\n')
     for text in texts:
@@ -89,7 +91,14 @@ def exceptionparse(url):
 def Parse(url):  # url = "https://blog.naver.com/~~~"
     target_url = get_targeturl(url)
     if re.match('https://blog.naver.com*.?',target_url):
-        link = target_url+firstparse(url)
+        real_url, isinner_html=firstinnerparse(url)
+        if isinner_html == False:
+            print('False')
+            link = target_url+real_url
+        else:
+            print('True')
+            link = real_url
+        print(link)
         secoundparse(link)
     elif re.match('https://m.blog.naver.com*.?',target_url):
         secoundparse(url)
@@ -97,6 +106,7 @@ def Parse(url):  # url = "https://blog.naver.com/~~~"
         link = exceptionparse(url)
         target_url = get_targeturl(link)
         link = target_url + firstparse(link)
+        print(link)
         secoundparse(link)
 
 
@@ -116,6 +126,7 @@ if __name__ == "__main__":
     for i in range(0,int(url_num)):
         url = f.readline()
         Parse(url)
+        print('=====================\n')
     f.close()
 
 """     BeautifulSoup is too slow to use parsing program
